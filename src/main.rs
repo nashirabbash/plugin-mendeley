@@ -9,7 +9,10 @@ fn main() {
     let logger = match Logger::new() {
         Ok(logger) => logger,
         Err(error) => {
-            eprintln!("{}", json!({"level": "error", "event": "server.logging_failed", "data": {"error": error.to_string()}}));
+            eprintln!(
+                "{}",
+                json!({"level": "error", "event": "server.logging_failed", "data": {"error": error.to_string()}})
+            );
             return;
         }
     };
@@ -18,7 +21,11 @@ fn main() {
         return;
     }
     if let Err(error) = service::run(&logger) {
-        logger.event("error", "server.failed", json!({"error": error.to_string()}));
+        logger.event(
+            "error",
+            "server.failed",
+            json!({"error": error.to_string()}),
+        );
         std::process::exit(1);
     }
 }

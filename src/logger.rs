@@ -43,7 +43,10 @@ fn log_file_path() -> std::io::Result<PathBuf> {
     } else if let Some(config) = env::var_os("XDG_CONFIG_HOME") {
         PathBuf::from(config)
     } else {
-        env::var_os("HOME").map(PathBuf::from).unwrap_or(env::current_dir()?).join(".config")
+        env::var_os("HOME")
+            .map(PathBuf::from)
+            .unwrap_or(env::current_dir()?)
+            .join(".config")
     };
     Ok(root.join("mendeley-onlyoffice").join("helper.log"))
 }

@@ -1,14 +1,16 @@
+use crate::http;
 use crate::logger::Logger;
+use crate::token::token_file_path;
 use serde_json::{json, Value};
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream};
 use std::thread;
 use std::time::Duration;
-use tiny_http::{Header, Response, Server};
+use tiny_http::Server;
 
 const HOST: &str = "127.0.0.1";
-const PORT: u16 = 8080;
-const SERVICE_NAME: &str = "mendeley-loopback";
+pub(crate) const PORT: u16 = 8080;
+pub(crate) const SERVICE_NAME: &str = "mendeley-loopback";
 
 fn health_payload(value: &Value) -> bool {
     value == &json!({"service": SERVICE_NAME, "status": "ok"})
@@ -73,16 +75,6 @@ pub fn stop(logger: &Logger) {
     }
 }
 
-fn send_json(request: tiny_http::Request, status: u16, value: Value) {
-    let body = value.to_string();
-    let response = Response::from_string(body)
-        .with_status_code(status)
-        .with_header(
-            Header::from_bytes("Content-Type", "application/json; charset=utf-8").unwrap(),
-        );
-    let _ = request.respond(response);
-}
-
 pub fn run(logger: &Logger) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let server = match Server::http(format!("{HOST}:{PORT}")) {
         Ok(server) => server,
@@ -104,27 +96,9 @@ pub fn run(logger: &Logger) -> Result<(), Box<dyn std::error::Error + Send + Syn
         "server.started",
         json!({"host": HOST, "port": PORT}),
     );
-    let mut stopping = false;
-    while !stopping {
-        let Some(request) = server.recv_timeout(Duration::from_millis(100))? else {
-            continue;
-        };
-        let method = request.method().as_str().to_owned();
-        let path = request.url().split('?').next().unwrap_or("").to_owned();
-        match (method.as_str(), path.as_str()) {
-            ("GET", "/health") => send_json(
-                request,
-                200,
-                json!({"service": SERVICE_NAME, "status": "ok"}),
-            ),
-            ("POST", "/shutdown") => {
-                send_json(request, 200, json!({"status": "stopping"}));
-                stopping = true;
-                logger.event("info", "server.shutdown_requested", json!({"port": PORT}));
-            }
-            _ => send_json(request, 404, json!({"error": "not_found"})),
-        }
-    }
-    logger.event("info", "server.stopped", json!({"port": PORT}));
-    Ok(())
+    http::serve(server, &token_file_path(), logger)
 }
+
+#[cfg(test)]
+#[path = "service_tests.rs"]
+mod tests;

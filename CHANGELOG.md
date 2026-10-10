@@ -7,6 +7,7 @@
 - Add one-step Linux installer that installs plugin and helper together, detects native/Flatpak/Snap paths, and supports custom plugin directories; publish installer tarball with releases.
 
 - Add Rust loopback helper lifecycle with safe reuse and shutdown of the matching service, health endpoint, and JSON event logging.
+- Port OAuth callback, token storage, retrieval, deletion, CORS, and request validation to the Rust loopback helper.
 
 ## 1.1.3
 

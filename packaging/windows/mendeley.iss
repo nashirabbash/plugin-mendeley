@@ -28,7 +28,7 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 Root: HKCU; Subkey: "Software\MendeleyOnlyOffice"; ValueType: string; ValueName: "PluginDir"; ValueData: "{code:GetPluginsParent}"; Flags: uninsdeletekey
 
 [Run]
-Filename: "{app}\bin\mendeley-loopback-server.exe"; Flags: runhidden nowait skipifsilent
+Filename: "{app}\bin\mendeley-loopback-server.exe"; Flags: runhidden nowait
 
 [UninstallRun]
 Filename: "{app}\bin\mendeley-loopback-server.exe"; Parameters: "--stop"; Flags: runhidden waituntilterminated skipifdoesntexist

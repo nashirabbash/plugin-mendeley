@@ -82,25 +82,31 @@ jobs:
         include:
           - runner: windows-latest
             arch: x64
+            rust-target: x86_64-pc-windows-msvc
           - runner: windows-11-arm
             arch: arm64
+            rust-target: aarch64-pc-windows-msvc
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          python-version: "3.12"
-      - run: python -m pip install pyinstaller
-      - run: pyinstaller --onefile --noconsole --name mendeley-loopback-server scripts/mendeley-loopback-server.py
+          targets: ${{ matrix.rust-target }}
+      - run: cargo build --locked --release --target ${{ matrix.rust-target }}
       - shell: pwsh
         run: |
+          $helper = "target/${{ matrix.rust-target }}/release/mendeley-loopback-server.exe"
+          if (-not (Test-Path $helper -PathType Leaf)) { throw "Rust helper missing: $helper" }
           New-Item -ItemType Directory -Force dist/plugin | Out-Null
           Copy-Item index.html,oauth.html,config.json,scripts,resources,translations,vendor,licenses dist/plugin -Recurse
           New-Item -ItemType Directory -Force dist/windows | Out-Null
-          Copy-Item dist/mendeley-loopback-server.exe "dist/windows/mendeley-loopback-server.exe"
+          Copy-Item $helper "dist/windows/mendeley-loopback-server.exe"
       - run: choco install innosetup --yes --no-progress
       - shell: pwsh
         run: iscc /DArch=${{ matrix.arch }} packaging/windows/mendeley.iss
+      - name: Verify Windows installer and helper lifecycle
+        shell: pwsh
+        run: ./tests/windows-installer.test.ps1
       - uses: actions/upload-artifact@v4
         with:
           name: windows-${{ matrix.arch }}

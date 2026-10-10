@@ -1,5 +1,5 @@
 const assert = require("assert");
-const { DocumentModule, InMemoryAdapter } = require("../scripts/document.js");
+const { DocumentModule, InMemoryAdapter, OnlyOfficeAdapter } = require("../scripts/document.js");
 
 async function runTests() {
     console.log("# Testing DocumentModule and InMemoryAdapter");
@@ -24,6 +24,61 @@ async function runTests() {
     assert.strictEqual(inMem.controls[0].lock, 3, "Inline citation control must allow editing and deletion");
     assert.strictEqual(inMem.controls[0].placeHolderText, "(Turing & Lovelace, 2026, p. 14)", "PlaceHolderText must match citation text to prevent default 'Your text here'");
     assert.strictEqual(inMem.footnotesCount, 0, "No footnotes should be created for inline style");
+
+    // Inline citations must remain inside the paragraph at the cursor.
+    const paragraph = { elements: ["Sentence before citation."] };
+    const controls = [];
+    let insertedType;
+    const host = {
+        scope: {},
+        plugin: {
+            executeMethod(method, args, callback) {
+                assert.strictEqual(method, "AddContentControl");
+                insertedType = args[0];
+                const control = {
+                    tag: args[1].Tag,
+                    text: "",
+                    GetTag() {
+                        return this.tag;
+                    },
+                    AddText(text) {
+                        this.text += text;
+                    }
+                };
+                controls.push(control);
+                paragraph.elements.push(control);
+                callback();
+            },
+            callCommand(command, close, recalculate, callback) {
+                command();
+                callback();
+            }
+        }
+    };
+    global.window = { Asc: host };
+    global.Asc = host;
+    global.Api = {
+        GetDocument() {
+            return {
+                GetAllContentControls() {
+                    return controls;
+                }
+            };
+        }
+    };
+    try {
+        const inlineAdapter = new OnlyOfficeAdapter();
+        await inlineAdapter.addContentControl(2, { Tag: "citation-tag", Lock: 3 }, "(Turing, 2026)", false);
+        assert.strictEqual(insertedType, 2, "Citation must use inline content control type");
+        assert.strictEqual(paragraph.elements.length, 2, "Citation must be added to current paragraph, not a new paragraph");
+        assert.strictEqual(paragraph.elements[1], controls[0]);
+        assert.strictEqual(controls[0].tag, "citation-tag");
+        assert.strictEqual(controls[0].text, "(Turing, 2026)");
+    } finally {
+        delete global.window;
+        delete global.Asc;
+        delete global.Api;
+    }
     // Test 2: Read citations back
     const citations = await doc.getCitations();
     assert.strictEqual(citations.length, 1, "Should retrieve 1 citation record");

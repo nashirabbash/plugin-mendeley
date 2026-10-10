@@ -38,7 +38,7 @@ jobs:
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: Build Debian and RPM packages
         env:
-          VERSION: 1.1.1
+          VERSION: 1.1.2
           NFPM_ARCH: ${{ matrix.arch }}
           STAGE: dist/package
         run: |
@@ -82,9 +82,38 @@ jobs:
           name: windows-${{ matrix.arch }}
           path: dist/installers/*.exe
 
+  plugin:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build ONLYOFFICE plugin
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZIP_DEFLATED, ZipFile
+
+          Path("dist").mkdir(exist_ok=True)
+          roots = ("config.json", "index.html", "oauth.html", "scripts", "resources", "translations", "vendor", "licenses")
+          with ZipFile("dist/mendeley.plugin", "w", compression=ZIP_DEFLATED) as archive:
+              for name in roots:
+                  root = Path(name)
+                  paths = [root] if root.is_file() else sorted(path for path in root.rglob("*") if path.is_file())
+                  for path in paths:
+                      relative = path.as_posix()
+                      if relative != "scripts/mendeley-loopback-server.py":
+                          archive.write(path, relative)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin
+          path: dist/mendeley.plugin
+
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux, windows]
+    needs: [linux, windows, plugin]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -95,4 +124,6 @@ jobs:
           merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
+          name: Mendeley ${{ github.ref_name }}
+          generate_release_notes: true
           files: release/**/*

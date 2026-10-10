@@ -289,6 +289,29 @@
             }
             var tag = properties.Tag || "";
             var cleanText = isHtml ? String(content || "") : String(content || "").replace(/<[^>]+>/g, "");
+            if (type === 2 && !isHtml) {
+                window.Asc.scope = window.Asc.scope || {};
+                window.Asc.scope.citationTag = tag;
+                window.Asc.scope.citationText = cleanText;
+
+                window.Asc.plugin.executeMethod("AddContentControl", [2, { Tag: tag, Lock: 3 }], function () {
+                    window.Asc.plugin.callCommand(function () {
+                        var controls = Api.GetDocument().GetAllContentControls();
+                        for (var i = 0; i < controls.length; i++) {
+                            if (controls[i].GetTag() === Asc.scope.citationTag) {
+                                controls[i].AddText(Asc.scope.citationText);
+                                break;
+                            }
+                        }
+                    }, false, true, function () {
+                        log("success", "OnlyOfficeAdapter.addContentControl.inline", { tag: tag });
+                        resolve(tag);
+                    });
+                });
+                return;
+
+            }
+
 
             var script = "";
             if (isHtml) {

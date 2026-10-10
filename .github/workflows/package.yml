@@ -153,7 +153,8 @@ jobs:
 
       - name: Build Linux one-step installer
         run: |
-          mkdir -p dist
+          mkdir -p dist bin
+          cp -R dist/bin/* bin/
           tar --exclude='__pycache__' --exclude='*.pyc' -czf dist/mendeley-linux-installer.tar.gz \
             install.sh bin config.json index.html oauth.html scripts resources translations vendor licenses
       - uses: actions/upload-artifact@v4
@@ -179,4 +180,6 @@ jobs:
           files: |
             release/mendeley.plugin
             release/mendeley-linux-installer.tar.gz
+            release/*.deb
+            release/*.rpm
             release/Mendeley-ONLYOFFICE-Setup-*.exe

@@ -41,23 +41,20 @@ Install ONLYOFFICE Desktop Editors first. You can install the Mendeley plugin an
 
 #### Linux
 
-**Option 1: 1-Line Quick Install (Recommended)**
-Open your terminal and run:
+**One-step Linux installer**
 
-```bash
-curl -sSL https://raw.githubusercontent.com/nashirabbash/plugin-mendeley/master/install.sh | bash
-```
-
-**Option 2: Universal Tarball**
 Download `mendeley-linux-installer.tar.gz` from [Releases](https://github.com/nashirabbash/plugin-mendeley/releases), extract it, and run:
 
 ```bash
+tar -xzf mendeley-linux-installer.tar.gz
 ./install.sh
 ```
 
-To uninstall at any time, run `./uninstall.sh`.
+The installer installs both plugin and local helper. It detects native, Flatpak, and Snap ONLYOFFICE plugin directories. If installation uses a custom path, set `ONLYOFFICE_PLUGIN_DIR` to its `sdkjs-plugins` directory or enter the path when prompted.
 
-#### Manual ONLYOFFICE GUI Installation (`.plugin`)
+#### Manual plugin-only installation (`.plugin`)
+
+The `.plugin` file installs only the ONLYOFFICE plugin. Desktop Editors still need the local helper; use the Linux installer above for a complete installation.
 
 1. Download `mendeley.plugin` from [Releases](https://github.com/nashirabbash/plugin-mendeley/releases).
 2. Open ONLYOFFICE Desktop Editors.

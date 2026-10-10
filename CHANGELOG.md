@@ -4,6 +4,7 @@
 
 - Check Mendeley Desktop first and automatically start web sign-in when no desktop session is available; ignore late desktop checks so they cannot replace the web session.
 - Fix Mendeley desktop refresh-cookie token extraction by importing `urllib.request` explicitly.
+- Add one-step Linux installer that installs plugin and helper together, detects native/Flatpak/Snap paths, and supports custom plugin directories; publish installer tarball with releases.
 
 ## 1.1.3
 

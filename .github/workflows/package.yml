@@ -111,6 +111,16 @@ jobs:
           name: plugin
           path: dist/mendeley.plugin
 
+      - name: Build Linux one-step installer
+        run: |
+          mkdir -p dist
+          tar --exclude='__pycache__' --exclude='*.pyc' -czf dist/mendeley-linux-installer.tar.gz \
+            install.sh config.json index.html oauth.html scripts resources translations vendor licenses
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-installer
+          path: dist/mendeley-linux-installer.tar.gz
+
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [linux, windows, plugin]
@@ -126,4 +136,6 @@ jobs:
         with:
           name: Mendeley ${{ github.ref_name }}
           generate_release_notes: true
-          files: release/mendeley.plugin
+          files: |
+            release/mendeley.plugin
+            release/mendeley-linux-installer.tar.gz

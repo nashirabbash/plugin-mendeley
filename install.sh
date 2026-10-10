@@ -7,6 +7,40 @@ PLUGIN_GUID="{BE5CBF95-C0AD-4842-B157-AC40FEDD9441}"
 echo "=========================================================="
 echo "  Mendeley ONLYOFFICE Auto-Connect Installer (Linux)      "
 echo "=========================================================="
+TARGETS=()
+DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+if [[ -n "${ONLYOFFICE_PLUGIN_DIR:-}" ]]; then
+    TARGETS+=("$ONLYOFFICE_PLUGIN_DIR")
+else
+    POSSIBLE_TARGETS=(
+        "$DATA_HOME/onlyoffice/desktopeditors/sdkjs-plugins"
+        "$HOME/.var/app/org.onlyoffice.desktopeditors/data/onlyoffice/desktopeditors/sdkjs-plugins"
+        "$HOME/snap/onlyoffice-desktopeditors/current/.local/share/onlyoffice/desktopeditors/sdkjs-plugins"
+    )
+    for target in "${POSSIBLE_TARGETS[@]}"; do
+        if [[ -d "$(dirname "$target")" ]]; then
+            TARGETS+=("$target")
+        fi
+    done
+fi
+
+if ((${#TARGETS[@]} == 0)); then
+    if [[ -t 0 ]]; then
+        read -r -p "ONLYOFFICE sdkjs-plugins path not found. Enter path: " target
+        [[ -n "$target" ]] || { echo "No plugin path supplied." >&2; exit 1; }
+        TARGETS+=("$target")
+    else
+        echo "ONLYOFFICE plugin path not found. Set ONLYOFFICE_PLUGIN_DIR to its sdkjs-plugins directory and rerun." >&2
+        exit 1
+    fi
+fi
+
+for target in "${TARGETS[@]}"; do
+    if [[ "$target" != /*/sdkjs-plugins ]]; then
+        echo "Plugin path must be an absolute sdkjs-plugins directory: $target" >&2
+        exit 1
+    fi
+done
 
 # 1. Install helper binary
 mkdir -p "$HOME/.local/bin"
@@ -41,49 +75,32 @@ NoDisplay=true
 EOF
 chmod 600 "$HOME/.config/autostart/mendeley-loopback.desktop"
 
-# Start service immediately
-if command -v systemctl >/dev/null 2>&1; then
-    systemctl --user daemon-reload 2>/dev/null || true
-    systemctl --user enable --now mendeley-loopback.service 2>/dev/null || true
+"$HOME/.local/bin/mendeley-loopback-server" --stop >/dev/null 2>&1 || true
+HELPER_STARTED=false
+if command -v systemctl >/dev/null 2>&1 && systemctl --user daemon-reload 2>/dev/null; then
+    systemctl --user enable mendeley-loopback.service 2>/dev/null || true
+    if systemctl --user restart mendeley-loopback.service 2>/dev/null ||
+       systemctl --user start mendeley-loopback.service 2>/dev/null; then
+        HELPER_STARTED=true
+    fi
 fi
 
-# Fallback if systemd user session is inactive
-if ! pgrep -f "mendeley-loopback-server" >/dev/null 2>&1; then
+if [[ "$HELPER_STARTED" != true ]]; then
+    "$HOME/.local/bin/mendeley-loopback-server" --stop >/dev/null 2>&1 || true
     "$HOME/.local/bin/mendeley-loopback-server" >/dev/null 2>&1 &
 fi
 echo "✓ Helper service running in background (port 8080)"
 
-# 3. Locate and install plugin to ONLYOFFICE sdkjs-plugins directory
-INSTALLED_COUNT=0
-TARGETS=(
-    "$HOME/.var/app/org.onlyoffice.desktopeditors/data/onlyoffice/desktopeditors/sdkjs-plugins"
-    "$HOME/.local/share/onlyoffice/desktopeditors/sdkjs-plugins"
-    "$HOME/snap/onlyoffice-desktopeditors/current/.local/share/onlyoffice/desktopeditors/sdkjs-plugins"
-)
-
 for target in "${TARGETS[@]}"; do
-    parent_dir="$(dirname "$target")"
-    if [[ -d "$parent_dir" ]] || [[ -d "$target" ]]; then
-        mkdir -p "$target/$PLUGIN_GUID"
-        cp -rf "$SCRIPT_DIR/config.json" "$SCRIPT_DIR/index.html" "$SCRIPT_DIR/oauth.html" \
-               "$SCRIPT_DIR/scripts" "$SCRIPT_DIR/resources" "$SCRIPT_DIR/translations" \
-               "$SCRIPT_DIR/vendor" "$SCRIPT_DIR/licenses" \
-               "$target/$PLUGIN_GUID/"
-        ln -sfn "$PLUGIN_GUID" "$target/mendeley" 2>/dev/null || true
-        echo "✓ Plugin installed at: $target/$PLUGIN_GUID"
-        INSTALLED_COUNT=$((INSTALLED_COUNT + 1))
-    fi
-done
 
-if ((INSTALLED_COUNT == 0)); then
-    DEFAULT_TARGET="$HOME/.local/share/onlyoffice/desktopeditors/sdkjs-plugins/$PLUGIN_GUID"
-    mkdir -p "$DEFAULT_TARGET"
+    mkdir -p "$target/$PLUGIN_GUID"
     cp -rf "$SCRIPT_DIR/config.json" "$SCRIPT_DIR/index.html" "$SCRIPT_DIR/oauth.html" \
            "$SCRIPT_DIR/scripts" "$SCRIPT_DIR/resources" "$SCRIPT_DIR/translations" \
            "$SCRIPT_DIR/vendor" "$SCRIPT_DIR/licenses" \
-           "$DEFAULT_TARGET/"
-    echo "✓ Plugin installed at default path: $DEFAULT_TARGET"
-fi
+           "$target/$PLUGIN_GUID/"
+    ln -sfn "$PLUGIN_GUID" "$target/mendeley" 2>/dev/null || true
+    echo "✓ Plugin installed at: $target/$PLUGIN_GUID"
+done
 
 echo "=========================================================="
 echo "  Installation completed successfully!                    "

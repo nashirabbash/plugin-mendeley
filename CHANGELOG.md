@@ -8,6 +8,7 @@
 
 - Add Rust loopback helper lifecycle with safe reuse and shutdown of the matching service, health endpoint, and JSON event logging.
 - Port OAuth callback, token storage, retrieval, deletion, CORS, and request validation to the Rust loopback helper.
+- Recover and persist Mendeley Desktop access tokens from application cookies and Service Worker cache in the Rust helper.
 
 ## 1.1.3
 

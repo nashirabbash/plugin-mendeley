@@ -1,3 +1,5 @@
+mod mendeley;
+mod windows_cookie;
 mod http;
 mod logger;
 mod service;

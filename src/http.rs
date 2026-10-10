@@ -168,7 +168,18 @@ fn handle_request(mut request: Request, token_path: &Path, logger: &Logger, stop
             200,
             json!({"service": SERVICE_NAME, "status": "ok"}),
         ),
-        ("GET", "/token") => send_json(request, 200, json!({"token": read_token(token_path)})),
+        ("GET", "/token") => {
+            let token = if token_path == crate::token::token_file_path() {
+                crate::token::read_token_or_recover(
+                    token_path,
+                    || crate::mendeley::get_token(logger),
+                    logger,
+                )
+            } else {
+                read_token(token_path)
+            };
+            send_json(request, 200, json!({"token": token}));
+        }
         ("GET", "/" | "/callback") => send_callback(request),
         ("POST", "/shutdown") => {
             send_json(request, 200, json!({"status": "stopping"}));

@@ -1,6 +1,6 @@
 use super::Logger;
 use crate::http::{serve, MAX_TOKEN_SIZE};
-use crate::token::{clear_token, read_token, write_token};
+use crate::token::{clear_token, read_token, read_token_or_recover, write_token};
 use std::fs;
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream};
@@ -55,6 +55,19 @@ fn token_reader_rejects_invalid_file_content() {
     fs::write(&path, "{").unwrap();
     assert_eq!(read_token(&path), None);
 
+    fs::remove_dir_all(directory).unwrap();
+}
+
+#[test]
+fn token_recovery_persists_only_when_no_saved_token_exists() {
+    let directory = temporary_directory();
+    let path = directory.join("active-token.json");
+    let logger = Logger::new().unwrap();
+    let recovered = read_token_or_recover(&path, || Some("recovered-token".into()), &logger);
+    assert_eq!(recovered.as_deref(), Some("recovered-token"));
+    assert_eq!(read_token(&path).as_deref(), Some("recovered-token"));
+    let ignored = read_token_or_recover(&path, || panic!("saved token must win"), &logger);
+    assert_eq!(ignored.as_deref(), Some("recovered-token"));
     fs::remove_dir_all(directory).unwrap();
 }
 

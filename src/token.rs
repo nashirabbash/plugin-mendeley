@@ -133,6 +133,22 @@ pub(crate) fn read_token(path: &Path) -> Option<String> {
     (!token.is_empty()).then(|| token.to_owned())
 }
 
+pub(crate) fn read_token_or_recover(
+    path: &Path,
+    recover: impl FnOnce() -> Option<String>,
+    logger: &crate::logger::Logger,
+) -> Option<String> {
+    if let Some(token) = read_token(path) {
+        return Some(token);
+    }
+    let token = recover()?;
+    match write_token(path, &token) {
+        Ok(()) => logger.event("success", "mendeley.token_persisted", json!({})),
+        Err(error) => logger.event("error", "mendeley.token_persist_failed", json!({"error": error.to_string()})),
+    }
+    Some(token)
+}
+
 pub(crate) fn clear_token(path: &Path) -> std::io::Result<()> {
     match fs::remove_file(path) {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),

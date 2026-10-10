@@ -144,7 +144,11 @@ pub(crate) fn read_token_or_recover(
     let token = recover()?;
     match write_token(path, &token) {
         Ok(()) => logger.event("success", "mendeley.token_persisted", json!({})),
-        Err(error) => logger.event("error", "mendeley.token_persist_failed", json!({"error": error.to_string()})),
+        Err(error) => logger.event(
+            "error",
+            "mendeley.token_persist_failed",
+            json!({"error": error.to_string()}),
+        ),
     }
     Some(token)
 }

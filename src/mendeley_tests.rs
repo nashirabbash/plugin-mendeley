@@ -9,7 +9,10 @@ fn temporary_directory() -> PathBuf {
     std::env::temp_dir().join(format!(
         "mendeley-recovery-test-{}-{}",
         std::process::id(),
-        SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
     ))
 }
 
@@ -31,10 +34,18 @@ fn legacy_access_token_cookie_is_returned_without_network_refresh() {
     fs::create_dir_all(&root).unwrap();
     let database = root.join("Cookies");
     let connection = Connection::open(&database).unwrap();
-    connection.execute("CREATE TABLE cookies (name TEXT, value TEXT, encrypted_value BLOB)", []).unwrap();
+    connection
+        .execute(
+            "CREATE TABLE cookies (name TEXT, value TEXT, encrypted_value BLOB)",
+            [],
+        )
+        .unwrap();
     connection.execute("INSERT INTO cookies VALUES ('accessToken', 'MS,fake-token-value-with-length-over-20', x'')", []).unwrap();
     drop(connection);
-    assert_eq!(extract_cookie_token(&database).as_deref(), Some("MS,fake-token-value-with-length-over-20"));
+    assert_eq!(
+        extract_cookie_token(&database).as_deref(),
+        Some("MS,fake-token-value-with-length-over-20")
+    );
     fs::remove_dir_all(root).unwrap();
 }
 
@@ -44,7 +55,14 @@ fn service_worker_cache_recovers_bearer_token_and_rejects_short_values() {
     let cache = root.join("Service Worker/CacheStorage/test");
     fs::create_dir_all(&cache).unwrap();
     let file = cache.join("cache_data_0");
-    fs::write(&file, b"Bearer short Bearer MSwx_fake_cached_token_1234567890_value!").unwrap();
-    assert_eq!(cache_token(&root).as_deref(), Some("MSwx_fake_cached_token_1234567890_value"));
+    fs::write(
+        &file,
+        b"Bearer short Bearer MSwx_fake_cached_token_1234567890_value!",
+    )
+    .unwrap();
+    assert_eq!(
+        cache_token(&root).as_deref(),
+        Some("MSwx_fake_cached_token_1234567890_value")
+    );
     fs::remove_dir_all(root).unwrap();
 }

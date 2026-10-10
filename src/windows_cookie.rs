@@ -46,9 +46,11 @@ pub(crate) fn decrypt(encrypted: &[u8]) -> Option<String> {
         {
             return None;
         }
-        let result =
-            String::from_utf8_lossy(std::slice::from_raw_parts(output.data, output.size as usize))
-                .into_owned();
+        let result = String::from_utf8_lossy(std::slice::from_raw_parts(
+            output.data,
+            output.size as usize,
+        ))
+        .into_owned();
         LocalFree(output.data.cast());
         (result.chars().count() > 20).then_some(result)
     }

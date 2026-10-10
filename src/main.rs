@@ -1,9 +1,9 @@
-mod mendeley;
-mod windows_cookie;
 mod http;
 mod logger;
+mod mendeley;
 mod service;
 mod token;
+mod windows_cookie;
 
 use logger::Logger;
 use serde_json::json;

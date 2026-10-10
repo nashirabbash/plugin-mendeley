@@ -45,13 +45,22 @@ pub(crate) fn find_storage_paths() -> Vec<PathBuf> {
                 .map(PathBuf::from)
                 .unwrap_or_else(|| home.join("AppData/Local"));
             for base in [&roaming, &local] {
-                add_dir(base.join("Mendeley Reference Manager"), &mut paths, &mut seen);
-                add_dir(base.join("mendeley-reference-manager"), &mut paths, &mut seen);
+                add_dir(
+                    base.join("Mendeley Reference Manager"),
+                    &mut paths,
+                    &mut seen,
+                );
+                add_dir(
+                    base.join("mendeley-reference-manager"),
+                    &mut paths,
+                    &mut seen,
+                );
             }
             if let Ok(packages) = fs::read_dir(local.join("Packages")) {
-                for package in packages.flatten().filter(|entry| {
-                    entry.file_name().to_string_lossy().contains("Mendeley")
-                }) {
+                for package in packages
+                    .flatten()
+                    .filter(|entry| entry.file_name().to_string_lossy().contains("Mendeley"))
+                {
                     add_dir(
                         package
                             .path()
@@ -78,7 +87,11 @@ pub(crate) fn find_storage_paths() -> Vec<PathBuf> {
             let xdg = env::var_os("XDG_CONFIG_HOME")
                 .map(PathBuf::from)
                 .unwrap_or_else(|| home.join(".config"));
-            add_dir(xdg.join("Mendeley Reference Manager"), &mut paths, &mut seen);
+            add_dir(
+                xdg.join("Mendeley Reference Manager"),
+                &mut paths,
+                &mut seen,
+            );
             add_dir(
                 home.join(".config/Mendeley Reference Manager"),
                 &mut paths,
@@ -137,7 +150,6 @@ fn find_process_storage_paths(paths: &mut Vec<PathBuf>, seen: &mut HashSet<PathB
 #[cfg(not(target_os = "linux"))]
 fn find_process_storage_paths(_: &mut Vec<PathBuf>, _: &mut HashSet<PathBuf>) {}
 
-
 fn refresh_token(cookie_header: &str) -> Option<String> {
     let response = reqwest::blocking::Client::builder()
         .timeout(Duration::from_secs(3))
@@ -162,9 +174,20 @@ fn refresh_token(cookie_header: &str) -> Option<String> {
 }
 
 fn extract_cookie_token(path: &Path) -> Option<String> {
-    let connection = Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY).ok()?;
-    let mut statement = connection.prepare("SELECT name, value, encrypted_value FROM cookies").ok()?;
-    let rows = statement.query_map([], |row| Ok((row.get::<_, String>(0).unwrap_or_default(), row.get::<_, String>(1).unwrap_or_default(), row.get::<_, Vec<u8>>(2).unwrap_or_default()))).ok()?;
+    let connection =
+        Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY).ok()?;
+    let mut statement = connection
+        .prepare("SELECT name, value, encrypted_value FROM cookies")
+        .ok()?;
+    let rows = statement
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0).unwrap_or_default(),
+                row.get::<_, String>(1).unwrap_or_default(),
+                row.get::<_, Vec<u8>>(2).unwrap_or_default(),
+            ))
+        })
+        .ok()?;
     let mut cookies = Vec::new();
     for row in rows.flatten() {
         let (name, mut value, encrypted) = row;
@@ -179,7 +202,11 @@ fn extract_cookie_token(path: &Path) -> Option<String> {
         }
     }
     let cookie_header = cookies.join("; ");
-    if cookie_header.is_empty() { None } else { refresh_token(&cookie_header) }
+    if cookie_header.is_empty() {
+        None
+    } else {
+        refresh_token(&cookie_header)
+    }
 }
 fn cache_token(root: &Path) -> Option<String> {
     let mut pending = vec![root.join("Service Worker/CacheStorage")];
@@ -202,7 +229,10 @@ fn cache_token(root: &Path) -> Option<String> {
                 .position(|bytes| bytes == b"Bearer")
             {
                 let mut start = offset + found + 6;
-                while content.get(start).is_some_and(|byte| byte.is_ascii_whitespace()) {
+                while content
+                    .get(start)
+                    .is_some_and(|byte| byte.is_ascii_whitespace())
+                {
                     start += 1;
                 }
                 if start == offset + found + 6 {
@@ -237,18 +267,30 @@ pub(crate) fn get_token(logger: &Logger) -> Option<String> {
             let cookie = directory.join(relative);
             if cookie.is_file() {
                 if let Some(token) = extract_cookie_token(&cookie) {
-                    logger.event("info", "mendeley.token_extracted", serde_json::json!({"source": "cookies", "path": cookie}));
+                    logger.event(
+                        "info",
+                        "mendeley.token_extracted",
+                        serde_json::json!({"source": "cookies", "path": cookie}),
+                    );
                     return Some(token);
                 }
             }
         }
 
         if let Some(token) = cache_token(directory) {
-            logger.event("info", "mendeley.token_extracted", serde_json::json!({"source": "cache", "path": directory}));
+            logger.event(
+                "info",
+                "mendeley.token_extracted",
+                serde_json::json!({"source": "cache", "path": directory}),
+            );
             return Some(token);
         }
     }
-    logger.event("warn", "mendeley.token_not_found", serde_json::json!({"scanned_count": paths.len()}));
+    logger.event(
+        "warn",
+        "mendeley.token_not_found",
+        serde_json::json!({"scanned_count": paths.len()}),
+    );
     None
 }
 #[cfg(test)]

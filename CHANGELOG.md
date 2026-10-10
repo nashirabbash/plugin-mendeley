@@ -6,6 +6,8 @@
 - Fix Mendeley desktop refresh-cookie token extraction by importing `urllib.request` explicitly.
 - Add one-step Linux installer that installs plugin and helper together, detects native/Flatpak/Snap paths, and supports custom plugin directories; publish installer tarball with releases.
 
+- Add Rust loopback helper lifecycle with safe reuse and shutdown of the matching service, health endpoint, and JSON event logging.
+
 ## 1.1.3
 
 - Fixed entity decoding when refreshing citations so HTML entities render as text.

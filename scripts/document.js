@@ -594,7 +594,8 @@
     };
 
     DocumentModule.prototype.updateCitationText = function (internalId, renderedText) {
-        var cleanText = String(renderedText || "").replace(/<[^>]+>/g, "");
+        var plainText = String(renderedText || "").replace(/<[^>]+>/g, "");
+        var cleanText = DocBuilderHelper && DocBuilderHelper.decodeEntities ? DocBuilderHelper.decodeEntities(plainText) : plainText;
         return this.adapter.updateControlText(internalId, cleanText).then(function () {
             log("success", "DocumentModule.updateCitationText", { internalId: internalId });
         });

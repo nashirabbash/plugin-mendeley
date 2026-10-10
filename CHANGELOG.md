@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.1.3
+
+- Fixed entity decoding when refreshing citations so HTML entities render as text.
+
 ## 1.1.2
 
 - Fixed normal citations creating block content controls; insert unlocked inline controls into the current paragraph.

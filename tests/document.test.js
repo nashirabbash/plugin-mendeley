@@ -102,6 +102,9 @@ async function runTests() {
     await doc.updateCitationText(ctrlId, "<i>(Turing, 2026, pp. 14-16)</i>");
     assert.strictEqual(inMem.controls[0].text, "(Turing, 2026, pp. 14-16)", "Updated text must have HTML tags stripped");
 
+    await doc.updateCitationText(ctrlId, "(Putra &#38; Veronica, 2022)");
+    assert.strictEqual(inMem.controls[0].text, "(Putra & Veronica, 2022)", "Refreshed citation text must decode HTML entities");
+
     // Test 5: Insert & get bibliography
     let bib = await doc.getBibliography();
     assert.strictEqual(bib, null, "Bibliography should not exist yet");

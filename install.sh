@@ -42,11 +42,23 @@ for target in "${TARGETS[@]}"; do
     fi
 done
 
-# 1. Install helper binary
+HELPER_ARCH="$(uname -m)"
+case "$HELPER_ARCH" in
+    x86_64|aarch64) ;;
+    *)
+        echo "Unsupported Linux architecture for Mendeley helper: $HELPER_ARCH" >&2
+        exit 1
+        ;;
+esac
+HELPER_SOURCE="$SCRIPT_DIR/bin/$HELPER_ARCH/mendeley-loopback-server"
+if [[ ! -x "$HELPER_SOURCE" ]]; then
+    echo "Mendeley helper binary missing for $HELPER_ARCH. Re-download the installer." >&2
+    exit 1
+fi
 mkdir -p "$HOME/.local/bin"
-cp -f "$SCRIPT_DIR/scripts/mendeley-loopback-server.py" "$HOME/.local/bin/mendeley-loopback-server"
+cp -f "$HELPER_SOURCE" "$HOME/.local/bin/mendeley-loopback-server"
 chmod +x "$HOME/.local/bin/mendeley-loopback-server"
-echo "✓ Installed helper binary at: $HOME/.local/bin/mendeley-loopback-server"
+echo "✓ Installed Rust helper at: $HOME/.local/bin/mendeley-loopback-server"
 
 # 2. Configure systemd user service & autostart desktop entry
 mkdir -p "$HOME/.config/systemd/user" "$HOME/.config/autostart"

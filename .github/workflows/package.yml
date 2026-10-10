@@ -19,19 +19,21 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: python -m pip install pyinstaller
-      - run: pyinstaller --onefile --name mendeley-loopback-server scripts/mendeley-loopback-server.py
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --locked --release
+      - run: cargo test --locked
       - name: Stage plugin payload
         run: |
           mkdir -p dist/package/plugin dist/package/bin dist/package/packaging/linux
           cp -R index.html oauth.html config.json scripts resources translations vendor licenses dist/package/plugin/
           rm -f dist/package/plugin/scripts/mendeley-loopback-server.py
-          cp dist/mendeley-loopback-server dist/package/bin/
+          cp target/release/mendeley-loopback-server dist/package/bin/
           cp packaging/linux/install-user.sh packaging/linux/uninstall-user.sh dist/package/packaging/linux/
           chmod +x dist/package/bin/mendeley-loopback-server dist/package/packaging/linux/*.sh
+      - name: Verify Linux installer
+        env:
+          MENDELEY_HELPER_BIN: target/release/mendeley-loopback-server
+        run: bash tests/linux-installer.test.sh
       - name: Install nfpm
         run: |
           go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
@@ -50,6 +52,28 @@ jobs:
           path: |
             dist/*.deb
             dist/*.rpm
+
+  linux-installer-binaries:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            rust-arch: x86_64
+          - runner: ubuntu-24.04-arm
+            rust-arch: aarch64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --locked --release
+      - run: |
+          mkdir -p "dist/bin/${{ matrix.rust-arch }}"
+          cp target/release/mendeley-loopback-server "dist/bin/${{ matrix.rust-arch }}/"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-installer-bin-${{ matrix.rust-arch }}
+          path: dist/bin/${{ matrix.rust-arch }}/
 
   windows:
     strategy:
@@ -83,9 +107,19 @@ jobs:
           path: dist/installers/*.exe
 
   plugin:
+    needs: linux-installer-binaries
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-installer-bin-x86_64
+          path: dist/bin/x86_64
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-installer-bin-aarch64
+          path: dist/bin/aarch64
+      - run: chmod +x dist/bin/*/mendeley-loopback-server
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -115,7 +149,7 @@ jobs:
         run: |
           mkdir -p dist
           tar --exclude='__pycache__' --exclude='*.pyc' -czf dist/mendeley-linux-installer.tar.gz \
-            install.sh config.json index.html oauth.html scripts resources translations vendor licenses
+            install.sh bin config.json index.html oauth.html scripts resources translations vendor licenses
       - uses: actions/upload-artifact@v4
         with:
           name: linux-installer

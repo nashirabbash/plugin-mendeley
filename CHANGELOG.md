@@ -4,7 +4,7 @@
 
 - Check Mendeley Desktop first and automatically start web sign-in when no desktop session is available; ignore late desktop checks so they cannot replace the web session.
 - Fix Mendeley desktop refresh-cookie token extraction by importing `urllib.request` explicitly.
-- Add one-step Linux installer that installs plugin and helper together, detects native/Flatpak/Snap paths, and supports custom plugin directories; publish installer tarball with releases.
+- Build Linux packages with the Rust loopback helper; ship x86_64 and aarch64 Rust helpers in the one-step installer and start/stop them through installer lifecycle scripts.
 
 - Add Rust loopback helper lifecycle with safe reuse and shutdown of the matching service, health endpoint, and JSON event logging.
 - Port OAuth callback, token storage, retrieval, deletion, CORS, and request validation to the Rust loopback helper.

@@ -67,5 +67,6 @@ X-GNOME-Autostart-enabled=true
 NoDisplay=true
 EOF
 chmod 600 "$AUTOSTART_DIR/mendeley-loopback.desktop"
+"$HELPER" --stop >/dev/null 2>&1 || true
 "$HELPER" >/dev/null 2>&1 &
-printf 'Installed Mendeley plugin at %s. Helper starts at next login.\n' "$plugin_dir"
+printf 'Installed Mendeley plugin at %s. Rust helper started and configured for login.\n' "$plugin_dir"

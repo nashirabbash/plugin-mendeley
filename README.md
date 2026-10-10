@@ -37,7 +37,7 @@ This plugin brings a Mendeley Cite-style workflow to ONLYOFFICE on Linux, so you
 
 ### ONLYOFFICE Desktop Editors
 
-Install ONLYOFFICE Desktop Editors first. You can install the Mendeley plugin and its local background helper using any of the methods below:
+Install ONLYOFFICE Desktop Editors first. You can install the Mendeley plugin and Rust loopback helper using any of the methods below:
 
 #### Linux
 
@@ -50,7 +50,7 @@ tar -xzf mendeley-linux-installer.tar.gz
 ./install.sh
 ```
 
-The installer installs both plugin and local helper. It detects native, Flatpak, and Snap ONLYOFFICE plugin directories. If installation uses a custom path, set `ONLYOFFICE_PLUGIN_DIR` to its `sdkjs-plugins` directory or enter the path when prompted.
+The installer installs both plugin and Rust helper, with binaries for x86_64 and ARM64 Linux. It detects native, Flatpak, and Snap ONLYOFFICE plugin directories. If installation uses a custom path, set `ONLYOFFICE_PLUGIN_DIR` to its `sdkjs-plugins` directory or enter the path when prompted.
 
 #### Manual plugin-only installation (`.plugin`)
 

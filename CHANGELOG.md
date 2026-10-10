@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.1.5
+
+- Fix Linux installer archive to include compiled Rust helpers for x86_64 and aarch64, exclude the legacy Python helper, and verify the packaged installer lifecycle.
+- Skip Windows builds and Windows release assets for this release.
+
 ## 1.1.4
 
 - Check Mendeley Desktop first and automatically start web sign-in when no desktop session is available; ignore late desktop checks so they cannot replace the web session.

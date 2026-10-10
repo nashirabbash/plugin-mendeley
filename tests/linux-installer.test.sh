@@ -8,6 +8,7 @@ FAKE_BIN="$TEMP_DIR/bin"
 PACKAGE_ROOT="$TEMP_DIR/installer"
 PLUGIN_GUID="{BE5CBF95-C0AD-4842-B157-AC40FEDD9441}"
 HELPER_STARTED=false
+mkdir -p "$FAKE_BIN"
 trap 'if [[ "$HELPER_STARTED" == true ]]; then "$HELPER_SOURCE" --stop >/dev/null 2>&1 || true; fi; rm -rf "$TEMP_DIR"' EXIT
 
 if curl --fail --silent http://127.0.0.1:8080/health >/dev/null; then
@@ -15,11 +16,24 @@ if curl --fail --silent http://127.0.0.1:8080/health >/dev/null; then
     exit 1
 fi
 
-mkdir -p "$FAKE_BIN" "$PACKAGE_ROOT/bin/$(uname -m)"
-cp "$ROOT/install.sh" "$PACKAGE_ROOT/"
-cp "$ROOT/config.json" "$ROOT/index.html" "$ROOT/oauth.html" "$PACKAGE_ROOT/"
-cp -R "$ROOT/scripts" "$ROOT/resources" "$ROOT/translations" "$ROOT/vendor" "$ROOT/licenses" "$PACKAGE_ROOT/"
-install -m 755 "$HELPER_SOURCE" "$PACKAGE_ROOT/bin/$(uname -m)/mendeley-loopback-server"
+INSTALLER_ARCHIVE="${MENDELEY_INSTALLER_ARCHIVE:-$TEMP_DIR/mendeley-linux-installer.tar.gz}"
+if [[ -z "${MENDELEY_INSTALLER_ARCHIVE:-}" ]]; then
+    mkdir -p "$TEMP_DIR/package-source/bin/$(uname -m)"
+    cp "$ROOT/install.sh" "$TEMP_DIR/package-source/"
+    cp "$ROOT/config.json" "$ROOT/index.html" "$ROOT/oauth.html" "$TEMP_DIR/package-source/"
+    cp -R "$ROOT/scripts" "$ROOT/resources" "$ROOT/translations" "$ROOT/vendor" "$ROOT/licenses" \
+        "$TEMP_DIR/package-source/"
+    rm -f "$TEMP_DIR/package-source/scripts/mendeley-loopback-server.py"
+    install -m 755 "$HELPER_SOURCE" \
+        "$TEMP_DIR/package-source/bin/$(uname -m)/mendeley-loopback-server"
+    tar --exclude='__pycache__' --exclude='*.pyc' -czf "$INSTALLER_ARCHIVE" \
+        -C "$TEMP_DIR/package-source" install.sh bin config.json index.html oauth.html \
+        scripts resources translations vendor licenses
+fi
+mkdir -p "$PACKAGE_ROOT"
+tar -xzf "$INSTALLER_ARCHIVE" -C "$PACKAGE_ROOT"
+[[ -x "$PACKAGE_ROOT/bin/$(uname -m)/mendeley-loopback-server" ]]
+[[ ! -e "$PACKAGE_ROOT/scripts/mendeley-loopback-server.py" ]]
 cat > "$FAKE_BIN/systemctl" <<'EOF'
 #!/usr/bin/env bash
 exit 1

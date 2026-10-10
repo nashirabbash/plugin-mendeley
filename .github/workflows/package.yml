@@ -40,7 +40,7 @@ jobs:
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: Build Debian and RPM packages
         env:
-          VERSION: 1.1.4
+          VERSION: 1.1.5
           NFPM_ARCH: ${{ matrix.arch }}
           STAGE: dist/package
         run: |
@@ -76,6 +76,7 @@ jobs:
           path: dist/bin/${{ matrix.rust-arch }}/
 
   windows:
+    if: github.event_name != 'push'
     strategy:
       fail-fast: false
       matrix:
@@ -155,8 +156,17 @@ jobs:
         run: |
           mkdir -p dist bin
           cp -R dist/bin/* bin/
-          tar --exclude='__pycache__' --exclude='*.pyc' -czf dist/mendeley-linux-installer.tar.gz \
+          test -x bin/x86_64/mendeley-loopback-server
+          test -x bin/aarch64/mendeley-loopback-server
+          tar --exclude='__pycache__' --exclude='*.pyc' \
+            --exclude='scripts/mendeley-loopback-server.py' \
+            -czf dist/mendeley-linux-installer.tar.gz \
             install.sh bin config.json index.html oauth.html scripts resources translations vendor licenses
+      - name: Verify Linux installer archive
+        env:
+          MENDELEY_HELPER_BIN: bin/x86_64/mendeley-loopback-server
+          MENDELEY_INSTALLER_ARCHIVE: dist/mendeley-linux-installer.tar.gz
+        run: bash tests/linux-installer.test.sh
       - uses: actions/upload-artifact@v4
         with:
           name: linux-installer
@@ -164,7 +174,7 @@ jobs:
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux, windows, plugin]
+    needs: [linux, plugin]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -180,4 +190,3 @@ jobs:
           files: |
             release/mendeley.plugin
             release/mendeley-linux-installer.tar.gz
-            release/Mendeley-ONLYOFFICE-Setup-*.exe

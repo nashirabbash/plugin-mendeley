@@ -23,7 +23,15 @@
     App.sdk = null;
     App.elements = null;
 
+    var desktopRequestVersion = 0;
     function tryAutoConnectDesktop(onSuccess, onFailure) {
+        var requestVersion = desktopRequestVersion;
+        var onCurrentSuccess = function (token) {
+            if (requestVersion === desktopRequestVersion) onSuccess(token);
+        };
+        var onCurrentFailure = function (error) {
+            if (requestVersion === desktopRequestVersion && onFailure) onFailure(error);
+        };
         function tryXhr(url, cb) {
             try {
                 var xhr = new XMLHttpRequest();
@@ -73,50 +81,25 @@
 
         tryEndpoint("http://127.0.0.1:8080/token", function (err, token) {
             if (token) {
-                onSuccess(token);
+                onCurrentSuccess(token);
             } else {
+                if (requestVersion !== desktopRequestVersion) return;
                 tryEndpoint("http://localhost:8080/token", function (err2, token2) {
                     if (token2) {
-                        onSuccess(token2);
-                    } else if (onFailure) {
-                        onFailure(err2 || err);
+                        onCurrentSuccess(token2);
+                    } else {
+                        onCurrentFailure(err2 || err);
                     }
                 });
             }
         });
     }
-    var desktopPollTimer = null;
-    var isManualLogout = false;
-
-    function startDesktopPolling() {
-        if (desktopPollTimer) return;
-        desktopPollTimer = setInterval(function () {
-            if (isManualLogout) return;
-            var current = Auth.getCurrentAuthState && Auth.getCurrentAuthState();
-            if (current === "main") {
-                stopDesktopPolling();
-                return;
-            }
-            tryAutoConnectDesktop(function (token) {
-                stopDesktopPolling();
-                window._activeMendToken = token;
-                if (typeof localStorage !== "undefined") localStorage.setItem("mendToken", token);
-                Auth.switchAuthState("main");
-                LibraryView.loadFilteredLibrary(false);
-            });
-        }, 1500);
+    function cancelDesktopChecks() {
+        desktopRequestVersion++;
+        Logger.debug("Auth.desktop.check.cancel", { version: desktopRequestVersion });
     }
 
-    function stopDesktopPolling() {
-        if (desktopPollTimer) {
-            clearInterval(desktopPollTimer);
-            desktopPollTimer = null;
-        }
-    }
-
-    App.startDesktopPolling = startDesktopPolling;
-    App.stopDesktopPolling = stopDesktopPolling;
-    App.setManualLogout = function (val) { isManualLogout = val; };
+    App.cancelDesktopChecks = cancelDesktopChecks;
 
     // Direct exports for module interoperability
     App.loadFilteredLibrary = LibraryView.loadFilteredLibrary;
@@ -256,9 +239,8 @@
                 Auth.switchAuthState("main");
                 LibraryView.loadFilteredLibrary(false);
             }, function () {
-                var hasMend = (window.Asc.plugin.mendeley || Helpers.getSettings());
-                Auth.switchAuthState(hasMend ? "login" : "config");
-                startDesktopPolling();
+                Auth.switchAuthState("login");
+                Auth.authFlow.authenticate();
             });
         }
 

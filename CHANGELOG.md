@@ -1,5 +1,9 @@
 # Change Log
 
+## Unreleased
+
+- Check Mendeley Desktop first and automatically start web sign-in when no desktop session is available; ignore late desktop checks so they cannot replace the web session.
+
 ## 1.1.3
 
 - Fixed entity decoding when refreshing citations so HTML entities render as text.

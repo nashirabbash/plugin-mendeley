@@ -75,16 +75,15 @@ Adjust source and destination paths for your checkout and installation. If your 
 
 ## Connect your Mendeley account
 
-### 1. Zero-Config Desktop Auto-Connect (Recommended)
+### 1. Desktop session first
 
-1. Make sure **Mendeley Reference Manager** is running and signed in on your computer.
-2. In ONLYOFFICE, open the **Plugins** tab and click **Mendeley**.
-3. The plugin will automatically detect your local Mendeley session and load your reference library.
-4. If prompted, simply click the green **⚡ Connect to Mendeley Desktop** button.
+1. Open **Mendeley** from ONLYOFFICE's **Plugins** tab.
+2. If Mendeley Reference Manager is running and signed in, the plugin loads your library from its local session.
+3. If no desktop session is available, the plugin starts web sign-in automatically. Keep the local helper running for Desktop Editors; it receives the OAuth redirect.
 
-### 2. Manual Web OAuth (Fallback)
+### 2. Web OAuth configuration
 
-If you prefer using a Mendeley developer OAuth application:
+To use your own Mendeley developer OAuth application:
 1. In the plugin's **Config** screen, enter your Mendeley Application ID.
 2. Set the redirect URI in your Mendeley Developer portal:
    - **Desktop Editors:** `http://localhost:8080/`
@@ -97,7 +96,7 @@ If you prefer using a Mendeley developer OAuth application:
 
 ### Token behavior
 
-The plugin reuses its browser-stored `mendToken` at startup. If none exists, Desktop Editors checks the loopback helper at `127.0.0.1:8080/token`; the helper returns its per-user token file or detects the signed-in Mendeley Reference Manager session. If neither provides a token, use manual Web OAuth.
+The plugin reuses its browser-stored `mendToken` at startup. If none exists, it checks `127.0.0.1:8080/token` for a saved helper token or a signed-in Mendeley Reference Manager session. If neither provides a token, web OAuth starts automatically. In Desktop Editors, the local helper must be running to prepare and receive web sign-in.
 
 - **Desktop Editors:** Mendeley redirects to the loopback helper, which saves the token. The plugin polls `/token` and stores its own copy in browser storage.
 - **Document Server:** Mendeley redirects to the plugin's `oauth.html`, which passes the token to the plugin window. The plugin stores it in browser storage.

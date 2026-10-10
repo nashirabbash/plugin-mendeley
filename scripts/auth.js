@@ -16,6 +16,8 @@
     var authFlow = {
         authenticate: function () {
             if (Helpers && Helpers.showError) Helpers.showError(null);
+            var app = (typeof window !== "undefined" && window.MendeleyApp) || {};
+            if (app.cancelDesktopChecks) app.cancelDesktopChecks();
             if (typeof localStorage !== "undefined") localStorage.removeItem("mendToken");
             if (typeof window !== "undefined") window._activeMendToken = null;
             if (typeof window !== "undefined" && window.Asc && window.Asc.plugin && window.Asc.plugin.mendeley && window.Asc.plugin.mendeley.auth) {

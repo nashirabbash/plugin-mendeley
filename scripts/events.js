@@ -31,12 +31,11 @@
         }
 
         function handleDesktopSync() {
-            if (App.setManualLogout) App.setManualLogout(false);
             if (Helpers && Helpers.showLoader) Helpers.showLoader(true);
             if (Helpers && Helpers.showError) Helpers.showError(null);
             if (App.tryAutoConnectDesktop) {
                 App.tryAutoConnectDesktop(function (token) {
-                    if (App.stopDesktopPolling) App.stopDesktopPolling();
+                    if (App.cancelDesktopChecks) App.cancelDesktopChecks();
                     if (Helpers && Helpers.showLoader) Helpers.showLoader(false);
                     window._activeMendToken = token;
                     if (typeof localStorage !== "undefined") localStorage.setItem("mendToken", token);
@@ -44,9 +43,8 @@
                     LibraryView.loadFilteredLibrary(false);
                 }, function () {
                     if (Helpers && Helpers.showLoader) Helpers.showLoader(false);
-                    if (Helpers && Helpers.showError) {
-                        Helpers.showError("Mendeley Desktop app was not detected. Please make sure Mendeley Reference Manager is running and signed in, then try again.");
-                    }
+                    Auth.switchAuthState("login");
+                    Auth.authFlow.authenticate();
                 });
             }
         }
@@ -69,7 +67,6 @@
         if (elements.loginBtn) {
             elements.loginBtn.onclick = function (e) {
                 if (e.target.classList.contains(displayNoneClass)) return true;
-                if (App.setManualLogout) App.setManualLogout(false);
                 Auth.authFlow.authenticate();
                 return true;
             };
@@ -78,8 +75,7 @@
         if (elements.logoutLink) {
             elements.logoutLink.onclick = function (e) {
                 if (e.target.classList.contains(displayNoneClass)) return true;
-                if (App.setManualLogout) App.setManualLogout(true);
-                if (App.stopDesktopPolling) App.stopDesktopPolling();
+                if (App.cancelDesktopChecks) App.cancelDesktopChecks();
                 if (typeof localStorage !== "undefined") localStorage.removeItem("mendToken");
                 window._activeMendToken = null;
                 LibraryView.clearLibrary();

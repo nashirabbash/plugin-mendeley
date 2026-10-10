@@ -40,7 +40,7 @@ jobs:
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: Build Debian and RPM packages
         env:
-          VERSION: 1.1.3
+          VERSION: 1.1.4
           NFPM_ARCH: ${{ matrix.arch }}
           STAGE: dist/package
         run: |
@@ -179,3 +179,4 @@ jobs:
           files: |
             release/mendeley.plugin
             release/mendeley-linux-installer.tar.gz
+            release/Mendeley-ONLYOFFICE-Setup-*.exe

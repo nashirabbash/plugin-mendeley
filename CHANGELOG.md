@@ -2,13 +2,15 @@
 
 ## Unreleased
 
+## 1.1.4
+
 - Check Mendeley Desktop first and automatically start web sign-in when no desktop session is available; ignore late desktop checks so they cannot replace the web session.
 - Fix Mendeley desktop refresh-cookie token extraction by importing `urllib.request` explicitly.
 - Build Linux packages with the Rust loopback helper; ship x86_64 and aarch64 Rust helpers in the one-step installer and start/stop them through installer lifecycle scripts.
-
 - Add Rust loopback helper lifecycle with safe reuse and shutdown of the matching service, health endpoint, and JSON event logging.
 - Port OAuth callback, token storage, retrieval, deletion, CORS, and request validation to the Rust loopback helper.
 - Recover and persist Mendeley Desktop access tokens from application cookies and Service Worker cache in the Rust helper.
+- Build and publish Windows x64 and ARM64 setup packages with the Rust helper; installer starts it after setup and stops it on uninstall.
 
 ## 1.1.3
 

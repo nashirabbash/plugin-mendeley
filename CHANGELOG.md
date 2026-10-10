@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Check Mendeley Desktop first and automatically start web sign-in when no desktop session is available; ignore late desktop checks so they cannot replace the web session.
+- Fix Mendeley desktop refresh-cookie token extraction by importing `urllib.request` explicitly.
 
 ## 1.1.3
 

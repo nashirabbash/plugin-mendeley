@@ -11,6 +11,8 @@ from pathlib import Path
 import tempfile
 import time
 import urllib.parse
+import urllib.request as urllib_request
+
 
 HOST = "127.0.0.1"
 PORT = 8080
@@ -173,7 +175,7 @@ def _extract_token_from_cookies(cookie_file):
             return None
 
         cookie_header = "; ".join(cookie_parts)
-        req = urllib.request.Request(
+        req = urllib_request.Request(
             "https://www.mendeley.com/reference-manager-desktop/refresh-token",
             data=b"{}",
             headers={
@@ -183,7 +185,7 @@ def _extract_token_from_cookies(cookie_file):
             },
             method="POST"
         )
-        with urllib.request.urlopen(req, timeout=3) as resp:
+        with urllib_request.urlopen(req, timeout=3) as resp:
             if resp.status == 200:
                 data = json.loads(resp.read().decode())
                 tok = data.get("access_token") or data.get("accessToken") or data.get("token")

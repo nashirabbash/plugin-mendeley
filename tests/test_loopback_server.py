@@ -172,6 +172,39 @@ class LoopbackServerTests(unittest.TestCase):
             else:
                 os.environ.pop("XDG_CONFIG_HOME", None)
 
+    def test_refresh_cookie_extraction_imports_urllib_request(self):
+        import sqlite3
+
+        cookie_db = Path(self.temp_dir.name) / "Cookies"
+        with sqlite3.connect(cookie_db) as connection:
+            connection.execute("CREATE TABLE cookies (name TEXT, value TEXT, encrypted_value BLOB)")
+            connection.execute("INSERT INTO cookies VALUES ('refreshToken', 'fake-refresh-cookie', x'')")
+
+        request_module = SERVER.urllib_request
+        original_urlopen = request_module.urlopen
+
+        class Response:
+            status = 200
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def read(self):
+                return b'{"access_token":"MS_fake_access_token_value_123456789"}'
+
+        request_module.urlopen = lambda request, timeout: Response()
+        del SERVER.urllib.request
+        try:
+            token = SERVER._extract_token_from_cookies(cookie_db)
+        finally:
+            SERVER.urllib.request = request_module
+            request_module.urlopen = original_urlopen
+
+        self.assertEqual(token, "MS_fake_access_token_value_123456789")
+
     def test_auto_sync_from_cache_storage(self):
         fake_cache_dir = Path(self.temp_dir.name) / "config" / "Mendeley Reference Manager" / "Service Worker" / "CacheStorage" / "dummy"
         fake_cache_dir.mkdir(parents=True, exist_ok=True)

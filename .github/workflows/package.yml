@@ -126,4 +126,4 @@ jobs:
         with:
           name: Mendeley ${{ github.ref_name }}
           generate_release_notes: true
-          files: release/**/*
+          files: release/mendeley.plugin

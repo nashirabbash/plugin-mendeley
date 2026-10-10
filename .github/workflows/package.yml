@@ -180,6 +180,4 @@ jobs:
           files: |
             release/mendeley.plugin
             release/mendeley-linux-installer.tar.gz
-            release/*.deb
-            release/*.rpm
             release/Mendeley-ONLYOFFICE-Setup-*.exe

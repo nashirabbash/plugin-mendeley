@@ -52,10 +52,6 @@ tar -xzf mendeley-linux-installer.tar.gz
 
 The installer installs both plugin and Rust helper, with binaries for x86_64 and ARM64 Linux. It detects native, Flatpak, and Snap ONLYOFFICE plugin directories. If installation uses a custom path, set `ONLYOFFICE_PLUGIN_DIR` to its `sdkjs-plugins` directory or enter the path when prompted.
 
-**Package-manager installers**
-
-Debian/Ubuntu users can install the `.deb` package from Releases with `sudo apt install ./<package>.deb`. Fedora/RHEL users can install the `.rpm` package with `sudo dnf install ./<package>.rpm`. Packages are available for x86_64 and ARM64.
-
 #### Windows
 
 Download `Mendeley-ONLYOFFICE-Setup-x64.exe` for x64 Windows or `Mendeley-ONLYOFFICE-Setup-arm64.exe` for ARM64 Windows from [Releases](https://github.com/nashirabbash/plugin-mendeley/releases), then run the installer. It installs the plugin and Rust helper, starts the helper, and configures it to start at sign-in. Uninstalling removes the startup entry and stops the helper.
